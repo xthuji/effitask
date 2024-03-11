@@ -1,13 +1,23 @@
 CARGO=cargo
 CARGO_FLAGS=
-PREFIX?=/usr
 
-ifneq ($(MODE),debug)
+UNAME_S := $(shell uname -s)
+
+ifeq ($(UNAME_S),Darwin)
+	# macOS
+	PREFIX ?= /usr/local
+else
+	# Linux
+	PREFIX ?= /usr
+endif
+
+ifneq ($(MODE),debug) 
 	TARGET=target/release/effitask
 	CARGO_FLAGS+=--release
 else
 	TARGET=target/debug/effitask
 endif
+
 
 all: build
 
@@ -21,11 +31,19 @@ gtk+-3.0:
 	fi
 
 install:
+  ifeq ($(UNAME_S),Darwin)
+	install -d $(PREFIX)/bin
+	install $(TARGET) $(PREFIX)/bin/
+	install -d $(PREFIX)/share/effitask
+	install -m 644 resources/*.png $(PREFIX)/share/effitask/
+	install -m 644 resources/*.css $(PREFIX)/share/effitask/
+  else
 	install --directory $(PREFIX)/bin
 	install $(TARGET) $(PREFIX)/bin/
 	install --directory $(PREFIX)/share/effitask
 	install --mode 644 resources/*.png $(PREFIX)/share/effitask/
 	install --mode 644 resources/*.css $(PREFIX)/share/effitask/
+  endif
 
 test:
 	$(CARGO) test $(CARGO_FLAGS)
